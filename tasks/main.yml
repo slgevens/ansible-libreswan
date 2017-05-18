@@ -1,0 +1,119 @@
+---
+- name: install needed packages
+  tags: package
+  package:
+    name: '{ item }'
+    state: present
+    
+    with_items:
+      - libnss3-dev
+      - libnspr4-dev
+      - pkg-config
+      - libpam-dev 
+      - libcap-ng-dev
+      - libcap-ng-utils
+      - libselinux-dev
+      - libcurl3-nss-dev
+      - flex
+      - bison
+      - gcc
+      - make
+      - libunbound-dev
+      - libnss3-tools
+      - libevent-dev
+      - xmlto
+      - libsystemd-dev
+      - lzip
+
+- name: get gmplib
+  tags: get
+  get_url: url="https://gmplib.org/download/gmp/{{ gmp_version }}.tar.lz" dest=/tmp/
+
+- name: unarchive gmplib
+  tags: unarchive
+  unarchive: src="/tmp/{{ gmp_version }}.tar.lz" dest=/tmp/ remote_src=yes
+
+- name: make install gmplib
+  tags: make_gmp
+  shell: bash configure --silent && make -s && make -s install && make -s check chdir="/tmp/{{ gmp_version }}"
+
+- name: get libreswan
+  tags: get
+  get_url: url="https://download.libreswan.org/{{ libreswan_version }}.tar.gz" dest=/tmp/
+
+- name: unarchive libreswan
+  tags: unarchive
+  unarchive: src="/tmp/{{ libreswan_version }}.tar.gz" dest=/tmp/ remote_src=yes
+
+- name: make install libreswan
+  tags: make_libreswan
+  shell: make -s programs && make -s install chdir="/tmp/{{ libreswan_version }}"
+
+- name: set nss db secret
+  tags: secret
+  expect:
+    command: certutil -W -d sql:/etc/ipsec.d
+    responses: 
+      Enter new password: "{{ nss_db_password }}"
+      Re-enter password: "{{ nss_db_password }}"
+
+- name: add password to nsspasswd file
+  tags: nsspasswd
+  lineinfile: path=/etc/ipsec.d/nsspassword line="NSS Certificate DB:{{ nss_db_password }}"
+
+- name: create RAW RSA key
+  tags: rsa_key
+  command: ipsec newhostkey --output "/etc/ipsec.d/{{ rsa_key_file }}.secrets"
+
+- name: create CA certificate
+  tags: cert_ca
+  expect:
+    command: certutil -S -k rsa -n "{{ ca_nickname }}" -s "CN={{ ca_subject }}" -v 12 -t "{{ ca_trusttargs }}" -x -d sql:/etc/ipsec.d
+    responses:
+      "|": dkewokopwkefopkjfejrpfjfejfiqjfijqjfjfqpwjfpqjwefpjqpwejfpqwejfpojqwepfojpweojfpjwpfjqprjfpqojfpojqefeofienfioenwoiwnncdzwps.q.spql
+      Press enter to continue: /bin/bash -c "echo"
+
+- name: create a signed user cert by the above CA
+  tags: cert_user
+  expect:
+    command: certutil -S -k rsa -c "{{ ca_issuer }}" -n "{{ ca_nickname }}" -s "CN={{ ca_subject }}" -v 12 -t "{{ ca_trusttargs }}" -d sql:/etc/ipsec.d
+    responses:
+      "|": dkewokopwkefopkjfejrpfjfejfiqjfijqjfjfqpwjfpqjwefpjqpwejfpqwejfpojqwepfojpweojfpjwpfjqprjfpqojfpojqefeofienfioenwoiwnncdzwps.q.spql
+      Press enter to continue: /bin/bash -c "echo"
+
+- name: create secret file
+  tags: template
+  template:
+    src: passwd.conf.j2
+    dest: /etc/ipsec.d/passwd
+    owner: root
+    group: root
+    mode: '0600'
+  when: secret_passwd is defined
+
+- name: ipsec configuration
+  tags: template
+  template:
+    src: ipsec.conf.j2
+    dest: /etc/ipsec.conf
+    owner: root
+    group: root
+    mode: '0600'
+
+#- name: start ipsec
+#  tags: start
+#  command: ipsec setup start
+#
+#- name: add tunnel configuration
+#  tags: start
+#  command: ipsec auto --add {{ conn_name }}
+#
+#- name: up tunnel configuration
+#  tags: start
+#  command: ipsec auto --up {{ conn_name }}
+#    
+#- name: stop ipsec
+#  tags: stop
+#  command: ipsec stop
+#  when: stop|default(False)|bool
+...

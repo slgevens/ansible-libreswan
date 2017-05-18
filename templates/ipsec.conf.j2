@@ -1,0 +1,24 @@
+# DO NOT EDIT MANUALLY
+config setup
+       dumpdir=/var/run/pluto/
+       protostack={% if protostack is defined %}{{ protostack }}{% endif %}
+       plutodebug=all
+       plutostderrlog={% if plutostderrlog is defined %}{{ plutostderrlog }}{% endif %}
+       {% if setup_items is defined %}
+       {{ setup_items }}
+       {% endif %}
+       
+{% if tunnel_configuration is defined %}
+{% for t in tunnel_configuration %}
+# /etc/ipsec.conf - Libreswan IPsec configuration file
+
+conn {{ t.conn_name }}
+     {{ t.conn_items }}
+
+{% else %}
+# /etc/ipsec.conf - Libreswan IPsec configuration file
+{% endfor %}
+{% endif %}
+
+
+include /etc/ipsec.d/*.conf

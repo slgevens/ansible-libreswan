@@ -1,0 +1,9 @@
+# DO NOT EDIT MANUALLY
+
+{% if secret_passwd is defined %}
+{% for p in secret_passwd %}
+{{ p.user }}:{{ p.password }}:{{ p.connection }}
+{% enfor %}
+{% else %}
+# NO PASSWD
+{% endif %}
