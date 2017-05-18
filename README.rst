@@ -12,7 +12,7 @@ Playbook
 License
 ========
 
-`MIT <./license>`_
+`MIT <./LICENSE>`_
 
 Author
 =======
