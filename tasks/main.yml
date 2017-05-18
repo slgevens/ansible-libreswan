@@ -1,54 +1,61 @@
 ---
 - name: install needed packages
   tags: package
-  package:
-    name: '{ item }'
-    state: present
-    
-    with_items:
-      - libnss3-dev
-      - libnspr4-dev
-      - pkg-config
-      - libpam-dev 
-      - libcap-ng-dev
-      - libcap-ng-utils
-      - libselinux-dev
-      - libcurl3-nss-dev
-      - flex
-      - bison
-      - gcc
-      - make
-      - libunbound-dev
-      - libnss3-tools
-      - libevent-dev
-      - xmlto
-      - libsystemd-dev
-      - lzip
+  apt: name="{{ item }}" state=present
+  with_items:
+    - libnss3-dev
+    - libnspr4-dev
+    - pkg-config
+    - libpam-dev 
+    - libcap-ng-dev
+    - libcap-ng-utils
+    - libselinux-dev
+    - libcurl3-nss-dev
+    - flex
+    - bison
+    - gcc
+    - make
+    - libunbound-dev
+    - libnss3-tools
+    - libevent-dev
+    - xmlto
+    - libsystemd-dev
+    - lzip
 
 - name: get gmplib
-  tags: get
+  tags: get_gmp
   get_url: url="https://gmplib.org/download/gmp/{{ gmp_version }}.tar.lz" dest=/tmp/
 
 - name: unarchive gmplib
-  tags: unarchive
+  tags: unarchive_gmp
   unarchive: src="/tmp/{{ gmp_version }}.tar.lz" dest=/tmp/ remote_src=yes
 
+- stat: path=/usr/local/lib/libgmp.so
+  register: gmp_lib
+  tags: make_gmp
+  
 - name: make install gmplib
   tags: make_gmp
   shell: bash configure --silent && make -s && make -s install && make -s check chdir="/tmp/{{ gmp_version }}"
+  when: gmp_lib.stat.exists == False
 
 - name: get libreswan
-  tags: get
+  tags: get_libreswan
   get_url: url="https://download.libreswan.org/{{ libreswan_version }}.tar.gz" dest=/tmp/
 
 - name: unarchive libreswan
-  tags: unarchive
+  tags: unarchive_libreswan
   unarchive: src="/tmp/{{ libreswan_version }}.tar.gz" dest=/tmp/ remote_src=yes
 
+- stat: path=/usr/local/sbin/ipsec
+  register: libreswan_lib
+  tags: make_libreswan
+  
 - name: make install libreswan
   tags: make_libreswan
   shell: make -s programs && make -s install chdir="/tmp/{{ libreswan_version }}"
-
+  when: libreswan_lib.stat.exists == False
+  
 - name: set nss db secret
   tags: secret
   expect:
