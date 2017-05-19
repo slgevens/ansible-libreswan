@@ -1,8 +1,8 @@
 ---
+pip_version: 1.5.6
+pexecpt_version: 4.2.1
 gmp_version: gmp-6.1.2
 libreswan_version: libreswan-3.20
-
-nss_db_password: somepassword
 
 rsa_key_file: rsa_key
 
