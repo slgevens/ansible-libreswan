@@ -127,20 +127,20 @@
     group: root
     mode: '0600'
 
-#- name: start ipsec
-#  tags: start
-#  command: ipsec setup start
-#
-#- name: add tunnel configuration
-#  tags: start
-#  command: ipsec auto --add {{ conn_name }}
-#
-#- name: up tunnel configuration
-#  tags: start
-#  command: ipsec auto --up {{ conn_name }}
-#    
-#- name: stop ipsec
-#  tags: stop
-#  command: ipsec stop
-#  when: stop|default(False)|bool
+- name: start ipsec
+  tags: start
+  command: ipsec setup start
+
+- name: add tunnel configuration
+  tags: start
+  command: ipsec auto --add {{ conn_name }}
+
+- name: up tunnel configuration
+  tags: start
+  command: ipsec auto --up {{ conn_name }}
+    
+- name: stop ipsec
+  tags: stop
+  command: ipsec stop
+  when: stop|default(False)|bool
 ...
