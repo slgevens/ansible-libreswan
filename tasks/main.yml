@@ -21,7 +21,16 @@
     - xmlto
     - libsystemd-dev
     - lzip
+    - python-pip
 
+- name: pip upgrade pip
+  tags: pip
+  pip: name=pip version="{{ pip_version }}"
+  
+- name: install pexecpt
+  tags: pip
+  pip: name=pexpect version="{{ pexecpt_version }}"
+    
 - name: get gmplib
   tags: get_gmp
   get_url: url="https://gmplib.org/download/gmp/{{ gmp_version }}.tar.lz" dest=/tmp/
@@ -66,30 +75,41 @@
 
 - name: add password to nsspasswd file
   tags: nsspasswd
-  lineinfile: path=/etc/ipsec.d/nsspassword line="NSS Certificate DB:{{ nss_db_password }}"
+  lineinfile: destfile=/etc/ipsec.d/nsspassword line="NSS Certificate DB:{{ nss_db_password }}" create=yes state=present
+
+- stat: path="/etc/ipsec.d/{{ rsa_key_file }}.secrets"
+  register: rsa_key
+  tags: rsa_key
 
 - name: create RAW RSA key
   tags: rsa_key
   command: ipsec newhostkey --output "/etc/ipsec.d/{{ rsa_key_file }}.secrets"
+  when: rsa_key.stat.exists == False
 
 - name: create CA certificate
   tags: cert_ca
+  when: cert|default(False)|bool
   expect:
     command: certutil -S -k rsa -n "{{ ca_nickname }}" -s "CN={{ ca_subject }}" -v 12 -t "{{ ca_trusttargs }}" -x -d sql:/etc/ipsec.d
     responses:
-      "|": dkewokopwkefopkjfejrpfjfejfiqjfijqjfjfqpwjfpqjwefpjqpwejfpqwejfpojqwepfojpweojfpjwpfjqprjfpqojfpojqefeofienfioenwoiwnncdzwps.q.spql
-      Press enter to continue: /bin/bash -c "echo"
+      Enter Password or Pin for "NSS Certificate DB": "{{ nss_db_password }}"
+      Continue typing until the progress meter is full: dkewokopwkefopkjfejrpfjfejfiqjfijqjfjfqpwjfpqjwefpjqpwejfpqwejfpojqwepfojpweojfpj
+      Finished.  Press enter to continue: /bin/bash -c "echo"
+      
 
 - name: create a signed user cert by the above CA
   tags: cert_user
+  when: cert|default(False)|bool
   expect:
     command: certutil -S -k rsa -c "{{ ca_issuer }}" -n "{{ ca_nickname }}" -s "CN={{ ca_subject }}" -v 12 -t "{{ ca_trusttargs }}" -d sql:/etc/ipsec.d
     responses:
-      "|": dkewokopwkefopkjfejrpfjfejfiqjfijqjfjfqpwjfpqjwefpjqpwejfpqwejfpojqwepfojpweojfpjwpfjqprjfpqojfpojqefeofienfioenwoiwnncdzwps.q.spql
+      Enter Password or Pin for "NSS Certificate DB": "{{ nss_db_password }}"
+      Continue typing until the progress meter is full: dkewokopwkefopkjfejrpfjfejfiqjfijqjfjfqpwjfpqjwefpjqpwejfpqwejfpojqwepfojpweojfpj
       Press enter to continue: /bin/bash -c "echo"
+  
 
 - name: create secret file
-  tags: template
+  tags: template_secret
   template:
     src: passwd.conf.j2
     dest: /etc/ipsec.d/passwd
@@ -99,7 +119,7 @@
   when: secret_passwd is defined
 
 - name: ipsec configuration
-  tags: template
+  tags: template_configuration
   template:
     src: ipsec.conf.j2
     dest: /etc/ipsec.conf
