@@ -3,7 +3,7 @@
 {% if secret_passwd is defined %}
 {% for p in secret_passwd %}
 {{ p.user }}:{{ p.password }}:{{ p.connection }}
-{% enfor %}
+{% endfor %}
 {% else %}
 # NO PASSWD
 {% endif %}
