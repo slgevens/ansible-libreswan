@@ -15,6 +15,7 @@ Playbook
      gather_facts: True
 
      vars:
+       nss_defined_password: True #defined to true only the first launch on a node
        nss_db_password: somepassword # should be encrypted obviously
    
        rsa_key_file: rsa_key

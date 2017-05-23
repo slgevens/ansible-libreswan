@@ -67,6 +67,7 @@
   
 - name: set nss db secret
   tags: secret
+  when: nss_defined_password|default(False)|bool and nss_db_password is defined
   expect:
     command: certutil -W -d sql:/etc/ipsec.d
     responses: 
