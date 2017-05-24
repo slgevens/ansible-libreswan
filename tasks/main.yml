@@ -1,4 +1,8 @@
 ---
+- name: update apt cache
+  tags: package
+  apt: update_cache=yes cache_valid_time=86400
+    
 - name: install needed packages
   tags: package
   apt: name="{{ item }}" state=present
@@ -87,6 +91,15 @@
   command: ipsec newhostkey --output "/etc/ipsec.d/{{ rsa_key_file }}.secrets"
   when: rsa_key.stat.exists == False
 
+- name: get rsa key generated
+  tags: rsa_key
+  register: pubkey
+  shell: grep pubkey "/etc/ipsec.d/{{ rsa_key_file }}.secrets" | sed -e 's/^.*=//'
+  when: rsa_key.stat.exists == True
+
+- debug: { var: 'pubkey.stdout' }
+  tags: rsa_key
+    
 - name: create CA certificate
   tags: cert_ca
   when: cert|default(False)|bool
@@ -95,8 +108,7 @@
     responses:
       Enter Password or Pin for "NSS Certificate DB": "{{ nss_db_password }}"
       Continue typing until the progress meter is full: dkewokopwkefopkjfejrpfjfejfiqjfijqjfjfqpwjfpqjwefpjqpwejfpqwejfpojqwepfojpweojfpj
-      Finished.  Press enter to continue: /bin/bash -c "echo"
-      
+      Finished.  Press enter to continue: /bin/bash -c "echo"      
 
 - name: create a signed user cert by the above CA
   tags: cert_user
@@ -107,8 +119,15 @@
       Enter Password or Pin for "NSS Certificate DB": "{{ nss_db_password }}"
       Continue typing until the progress meter is full: dkewokopwkefopkjfejrpfjfejfiqjfijqjfjfqpwjfpqjwefpjqpwejfpqwejfpojqwepfojpweojfpj
       Press enter to continue: /bin/bash -c "echo"
-  
 
+- name: fetch pubkey & db (locally) since we cannot export the private key
+  tags: fetch
+  with_items:
+    - cert9.db
+    - key4.db
+    - "{{ rsa_key_file }}.secrets"
+  fetch: src="/etc/ipsec.d/{{ item }}" dest="{{ playbook_dir }}/files/{{ inventory_hostname }}-{{ item }}" flat=yes  
+      
 - name: create secret file
   tags: template_secret
   template:
@@ -128,17 +147,26 @@
     group: root
     mode: '0600'
 
+- stat: path=/var/run/pluto/pluto.pid
+  register: pluto_started
+  tags: start
+    
 - name: start ipsec
   tags: start
   command: ipsec setup start
-
+  when: pluto_started.stat.exists == False
+  
 - name: add tunnel configuration
   tags: start
-  command: ipsec auto --add {{ conn_name }}
+  with_items:
+    - "{{ my_tunnels }}"
+  command: ipsec auto --add "{{ item }}"
 
 - name: up tunnel configuration
   tags: start
-  command: ipsec auto --up {{ conn_name }}
+  with_items:
+    - "{{ my_tunnels }}"
+  command: ipsec auto --up "{{ item }}"
     
 - name: stop ipsec
   tags: stop
