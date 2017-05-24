@@ -40,7 +40,7 @@ Playbook
 
        tunnel_configuration: #to create your subnets, tunnels...
          - conn_name: evens
-	   conn_items: |-
+	   conn_configuration: |-
 	     some more items
 
      tasks:
@@ -48,7 +48,15 @@ Playbook
        - include_role: name=ansible-libreswan
          become: True
          environment: "{{ proxy_env }}"
-	   
+
+Play
+=======
+::
+
+   ansible-playbook libreswan.yml -l $node -e cert=True -e nss_defined_password=True
+
+Where ``cert=True`` indicate that you want to generate a RAW RSA key for the machine and where ``nss_defined_password=True`` indicate that you want to set a new password for the BD.
+   
 License
 ========
 
