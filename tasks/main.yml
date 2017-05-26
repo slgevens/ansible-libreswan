@@ -157,17 +157,25 @@
   when: pluto_started.stat.exists == False
   
 - name: add tunnel configuration
+  register: start_add
   tags: start
   with_items:
     - "{{ my_tunnels }}"
   command: ipsec auto --add "{{ item }}"
 
+- debug: { var: start_add }
+  tags: start
+  
 - name: up tunnel configuration
+  register: start_up
   tags: start
   with_items:
     - "{{ my_tunnels }}"
   command: ipsec auto --up "{{ item }}"
-    
+
+- debug: { var: start_up }
+  tags: start
+  
 - name: stop ipsec
   tags: stop
   command: ipsec stop
