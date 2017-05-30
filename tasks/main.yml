@@ -146,15 +146,10 @@
     owner: root
     group: root
     mode: '0600'
-
-- stat: path=/var/run/pluto/pluto.pid
-  register: pluto_started
-  tags: start
     
 - name: start ipsec
   tags: start
-  command: ipsec setup start
-  when: pluto_started.stat.exists == False
+  command: ipsec restart && ipsec setup start
   
 - name: add tunnel configuration
   register: start_add
