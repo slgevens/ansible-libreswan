@@ -123,9 +123,8 @@
 - name: fetch pubkey & db (locally) since we cannot export the private key
   tags: fetch
   with_items:
-    - cert9.db
-    - key4.db
     - "{{ rsa_key_file }}.secrets"
+    - "*.db"
   fetch: src="/etc/ipsec.d/{{ item }}" dest="{{ playbook_dir }}/files/{{ inventory_hostname }}-{{ item }}" flat=yes  
       
 - name: create secret file
