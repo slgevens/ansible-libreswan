@@ -1,9 +1,10 @@
 # DO NOT EDIT MANUALLY
 config setup
        dumpdir=/var/run/pluto/
-       protostack={% if protostack is defined %}{{ protostack }}{% endif %}
-       
-       plutodebug=all
+       protostack={% if protostack is defined %}{{ protostack }}
+       {% endif %}       
+       plutodebug={% if plutodebug is defined %}{{ plutodebug }}{% else %}all
+       {% endif %}
        plutostderrlog={% if plutostderrlog is defined %}{{ plutostderrlog }}{% else %}/var/log/pluto.log
        {% endif %}
 
