@@ -149,7 +149,11 @@
     
 - name: start ipsec
   tags: start
-  command: ipsec restart && ipsec setup start
+  command: ipsec restart
+
+- name: read secrets keys
+  tags: start
+  command: ipsec auto --rereadsecrets
   
 - name: add tunnel configuration
   register: start_add
