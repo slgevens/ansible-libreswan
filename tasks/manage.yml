@@ -4,29 +4,24 @@
 
 - name: IPSec reads secrets
   command: ipsec auto --rereadsecrets
+
+- name: Start/load tunnels configuration in ipsec
+  register: tun_add
+  command: ipsec auto --add "{{ item.conn_name }}"
+  with_items:
+    - "{{ libreswan_tunnel_configuration }}"
+
+- debug: { var: tun_add }
+  tags: start
   
-- stat: path=/var/run/pluto/pluto.pid
-  register: plutopid
+- name: Turn up tunnels configuration
+  register: tun_up
+  command: ipsec auto --up "{{ item.conn_name }}"
+  with_items:
+    - "{{ libreswan_tunnel_configuration }}"
 
-- block:
-  - name: Start/load tunnels configuration in ipsec
-    register: tun_add
-    command: ipsec auto --add "{{ item.conn_name }}"
-    with_items:
-      - "{{ libreswan_tunnel_configuration }}"
-
-  - debug: { var: tun_add }
-    tags: start
-    
-  - name: Turn up tunnels configuration
-    register: tun_up
-    command: ipsec auto --up "{{ item.conn_name }}"
-    with_items:
-      - "{{ libreswan_tunnel_configuration }}"
-
-  - debug: { var: tun_up }
-    tags: start
-  when: plutopid.stat.exists == False
+- debug: { var: tun_up }
+  tags: start
 
 - name: Stop ipsec if `stop_ipsec` is defined
   command: ipsec stop
