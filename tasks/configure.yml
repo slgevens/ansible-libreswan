@@ -1,4 +1,15 @@
 ---
+- set_fact:
+    initialized_db:
+      - key4.db
+      - cert9.db
+
+- name: Initializing NSS database
+  command: ipsec initnss --nssdir /etc/ipsec.d
+  args: 
+    creates: /etc/ipsec.d/{{ item }}
+  with_items: "{{ initialized_db }}"
+
 - block:
   - name: Set nss db secret
     expect:
@@ -17,6 +28,7 @@
 
 - name: Create host own RAW RSA key
   command: ipsec newhostkey --output "/etc/ipsec.d/{{ libreswan_rsa_key_file }}.secrets"
+  args:  
     creates: /etc/ipsec.d/{{ libreswan_rsa_key_file }}.secrets
 
 - stat: path="/etc/ipsec.d/{{ libreswan_rsa_key_file }}.secrets"
