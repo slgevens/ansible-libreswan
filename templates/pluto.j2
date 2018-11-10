@@ -1,0 +1,11 @@
+#jinja2: line_statement_prefix: "%", line_comment_prefix: "##"
+# {{ ansible_managed }}
+
+{{ libreswan_plutostderrlog }} {
+    missingok
+    notifempty
+    compress
+    daily
+    rotate 10
+    create 0600 root root
+}

@@ -1,9 +1,9 @@
-# DO NOT EDIT MANUALLY
+#jinja2: line_statement_prefix: "%", line_comment_prefix: "##"
+# {{ ansible_managed }}
 
-{% if secret_passwd is defined %}
-{% for p in secret_passwd %}
+% if libreswan_passwd is defined
+% for p in libreswan_passwd
 {{ p.user }}:{{ p.password }}:{{ p.connection }}
-{% endfor %}
-{% else %}
-# NO PASSWD
-{% endif %}
+% endfor
+% else
+% endif

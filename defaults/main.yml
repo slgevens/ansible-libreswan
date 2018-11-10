@@ -1,18 +1,17 @@
----
-pip_version: 1.5.6
-pexecpt_version: 4.2.1
-gmp_version: gmp-6.1.2
+libreswan_packages: [libnss3-dev, libnspr4-dev, pkg-config, libpam-dev, libcap-ng-dev,
+  libcap-ng-utils, libselinux-dev, libcurl3-nss-dev, flex, bison, gcc, make, libunbound-dev,
+  libnss3-tools, libevent-dev, xmlto, libsystemd-dev, lzip, python-pip]
+libreswan_ca_issuer: evens
+libreswan_ca_nickname: evens
+libreswan_ca_subject: epiconcept
+libreswan_ca_trusttargs: TC,C,T
+libreswan_gmp_version: gmp-6.1.2
+libreswan_gmp_url: https://gmplib.org/download/gmp/{{ libreswan_gmp_version }}.tar.lz
 libreswan_version: libreswan-3.20
-
-rsa_key_file: rsa_key
-
-ca_nickname: evens
-ca_subject: epiconcept
-ca_trusttargs: TC,C,T
-ca_issuer: evens
-
-###
-
-protostack: netkey
-plutostderrlog: /var/log/pluto.log
-...
+libreswan_ipsec_url: https://download.libreswan.org/{{ libreswan_version }}.tar.gz
+libreswan_pexecpt_version: 4.2.1
+libreswan_pip_version: 1.5.6
+libreswan_plutostderrlog: /var/log/pluto.log
+libreswan_protostack: netkey
+libreswan_rsa_key_file: rsa_key
+libreswan_dumpdir: /var/run/pluto/

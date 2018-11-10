@@ -1,192 +1,42 @@
 ---
-- name: update apt cache
-  tags: package
-  apt: update_cache=yes cache_valid_time=86400
+- name: Update apt cache & install needed packages
+  apt: name="{{ libreswan_packages }}" state=present update_cache=yes cache_valid_time=86400
+
+- name: Install pip-"{{ libreswan_pip_version }}"
+  pip: name=pip version="{{ libreswan_pip_version }}"
+  
+- name: Install pexecpt using pip
+  pip: name=pexpect version="{{ libreswan_pexecpt_version }}"
+
+- name: Check if `gmplib` is present
+  stat: path=/usr/local/lib/libgmp.a
+  register: gmplib_inst
+
+- block:
+  - name: Get `gmplib` from official website
+    get_url: url="{{ libreswan_gmp_url }}" dest=/tmp/
+
+  - name: Unarchive `gmplib` tar
+    unarchive: src="/tmp/{{ libreswan_gmp_version }}.tar.lz" dest=/tmp/ remote_src=yes
     
-- name: install needed packages
-  tags: package
-  apt: name="{{ item }}" state=present
-  with_items:
-    - libnss3-dev
-    - libnspr4-dev
-    - pkg-config
-    - libpam-dev 
-    - libcap-ng-dev
-    - libcap-ng-utils
-    - libselinux-dev
-    - libcurl3-nss-dev
-    - flex
-    - bison
-    - gcc
-    - make
-    - libunbound-dev
-    - libnss3-tools
-    - libevent-dev
-    - xmlto
-    - libsystemd-dev
-    - lzip
-    - python-pip
+  - name: Configure and make install
+    shell: bash configure --silent && make -s && make -s install && make -s check chdir="/tmp/{{ libreswan_gmp_version }}"
+  when: gmplib_inst.stat.exists == False 
 
-- name: pip upgrade pip
-  tags: pip
-  pip: name=pip version="{{ pip_version }}"
-  
-- name: install pexecpt
-  tags: pip
-  pip: name=pexpect version="{{ pexecpt_version }}"
+- name: Check if ipsec is present
+  stat: path=/usr/local/sbin/ipsec
+  register: ipsec_inst
+
+- block:
+  - name: Get `libreswan` from official website
+    get_url: url="{{ libreswan_ipsec_url }}" dest=/tmp/
+
+  - name: Unarchive `libreswan` tar
+    unarchive: src="/tmp/{{ libreswan_version }}.tar.gz" dest=/tmp/ remote_src=yes
     
-- name: get gmplib
-  tags: get_gmp
-  get_url: url="https://gmplib.org/download/gmp/{{ gmp_version }}.tar.lz" dest=/tmp/
+  - name: make install `libreswan`
+    shell: make -s programs && make -s install chdir="/tmp/{{ libreswan_version }}"
+  when: ipsec_inst.stat.exists == False
 
-- name: unarchive gmplib
-  tags: unarchive_gmp
-  unarchive: src="/tmp/{{ gmp_version }}.tar.lz" dest=/tmp/ remote_src=yes
-
-- stat: path=/usr/local/lib/libgmp.so
-  register: gmp_lib
-  tags: make_gmp
-  
-- name: make install gmplib
-  tags: make_gmp
-  shell: bash configure --silent && make -s && make -s install && make -s check chdir="/tmp/{{ gmp_version }}"
-  when: gmp_lib.stat.exists == False
-
-- name: get libreswan
-  tags: get_libreswan
-  get_url: url="https://download.libreswan.org/{{ libreswan_version }}.tar.gz" dest=/tmp/
-
-- name: unarchive libreswan
-  tags: unarchive_libreswan
-  unarchive: src="/tmp/{{ libreswan_version }}.tar.gz" dest=/tmp/ remote_src=yes
-
-- stat: path=/usr/local/sbin/ipsec
-  register: libreswan_lib
-  tags: make_libreswan
-  
-- name: make install libreswan
-  tags: make_libreswan
-  shell: make -s programs && make -s install chdir="/tmp/{{ libreswan_version }}"
-  when: libreswan_lib.stat.exists == False
-  
-- name: set nss db secret
-  tags: secret
-  when: nss_defined_password|default(False)|bool and nss_db_password is defined
-  expect:
-    command: certutil -W -d sql:/etc/ipsec.d
-    responses: 
-      Enter new password: "{{ nss_db_password }}"
-      Re-enter password: "{{ nss_db_password }}"
-
-- name: add password to nsspasswd file
-  tags: nsspasswd
-  lineinfile: destfile=/etc/ipsec.d/nsspassword line="NSS Certificate DB:{{ nss_db_password }}" create=yes state=present
-
-- stat: path="/etc/ipsec.d/{{ rsa_key_file }}.secrets"
-  register: rsa_key
-  tags: rsa_key
-
-- name: create RAW RSA key
-  tags: rsa_key
-  command: ipsec newhostkey --output "/etc/ipsec.d/{{ rsa_key_file }}.secrets"
-  when: rsa_key.stat.exists == False
-
-- name: get rsa key generated
-  tags: rsa_key
-  register: pubkey
-  shell: grep pubkey "/etc/ipsec.d/{{ rsa_key_file }}.secrets" | sed -e 's/^.*=//'
-  when: rsa_key.stat.exists == True
-
-- debug: { var: 'pubkey.stdout' }
-  tags: rsa_key
-    
-- name: create CA certificate
-  tags: cert_ca
-  when: cert|default(False)|bool
-  expect:
-    command: certutil -S -k rsa -n "{{ ca_nickname }}" -s "CN={{ ca_subject }}" -v 12 -t "{{ ca_trusttargs }}" -x -d sql:/etc/ipsec.d
-    responses:
-      Enter Password or Pin for "NSS Certificate DB": "{{ nss_db_password }}"
-      Continue typing until the progress meter is full: dkewokopwkefopkjfejrpfjfejfiqjfijqjfjfqpwjfpqjwefpjqpwejfpqwejfpojqwepfojpweojfpj
-      Finished.  Press enter to continue: /bin/bash -c "echo"      
-
-- name: create a signed user cert by the above CA
-  tags: cert_user
-  when: cert|default(False)|bool
-  expect:
-    command: certutil -S -k rsa -c "{{ ca_issuer }}" -n "{{ ca_nickname }}" -s "CN={{ ca_subject }}" -v 12 -t "{{ ca_trusttargs }}" -d sql:/etc/ipsec.d
-    responses:
-      Enter Password or Pin for "NSS Certificate DB": "{{ nss_db_password }}"
-      Continue typing until the progress meter is full: dkewokopwkefopkjfejrpfjfejfiqjfijqjfjfqpwjfpqjwefpjqpwejfpqwejfpojqwepfojpweojfpj
-      Press enter to continue: /bin/bash -c "echo"
-  
-- name: fetch created pubkey 
-  tags: fetch
-  with_items:
-    - "{{ rsa_key_file }}.secrets"
-  fetch: src="/etc/ipsec.d/{{ item }}" dest="{{ playbook_dir }}/files/{{ inventory_hostname }}-{{ item }}" flat=yes
-  
-- name: find db files
-  tags: fetch1
-  register: find_db
-  shell: ls -1 *.db
-  args:
-    chdir: /etc/ipsec.d
-  
-- name: fetch dbs (locally) since we cannot export the private key
-  tags: fetch2
-  with_items: "{{ find_db.stdout_lines }}"
-  fetch: src="/etc/ipsec.d/{{ item }}" dest="{{ playbook_dir }}/files/{{ inventory_hostname }}-{{ item }}" flat=yes
-      
-- name: create secret file
-  tags: template_secret
-  template:
-    src: passwd.conf.j2
-    dest: /etc/ipsec.d/passwd
-    owner: root
-    group: root
-    mode: '0600'
-  when: secret_passwd is defined
-
-- name: ipsec configuration
-  tags: template_configuration
-  template:
-    src: ipsec.conf.j2
-    dest: /etc/ipsec.conf
-    owner: root
-    group: root
-    mode: '0600'
-    
-- name: start ipsec
-  tags: start
-  command: ipsec restart
-
-- name: read secrets keys
-  tags: start
-  command: ipsec auto --rereadsecrets
-  
-- name: add tunnel configuration
-  register: start_add
-  tags: start
-  with_items:
-    - "{{ my_tunnels }}"
-  command: ipsec auto --add "{{ item }}"
-
-- debug: { var: start_add }
-  tags: start
-  
-- name: up tunnel configuration
-  register: start_up
-  tags: start
-  with_items:
-    - "{{ my_tunnels }}"
-  command: ipsec auto --up "{{ item }}"
-
-- debug: { var: start_up }
-  tags: start
-  
-- name: stop ipsec
-  tags: stop
-  command: ipsec stop
-  when: stop|default(False)|bool
-...
+- include_tasks: configure.yml
+- include_tasks: manage.yml
