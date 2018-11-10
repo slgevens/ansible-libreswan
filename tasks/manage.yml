@@ -20,7 +20,7 @@
   with_items:
     - "{{ libreswan_tunnel_configuration }}"
 
-- debug: { var: tun_up }
+- debug: { var: tun_up.stdout_lines }
   tags: start
 
 - name: Stop ipsec if `stop_ipsec` is defined
