@@ -41,11 +41,6 @@
 
 - debug: { var: 'pubkey.stdout' }
 
-- name: Fetch pubkey 
-  fetch: src="/etc/ipsec.d/{{ item }}" dest="{{ playbook_dir }}/files/{{ inventory_hostname }}-{{ item }}" flat=yes
-  with_items:
-    - "{{ libreswan_rsa_key_file }}.secrets"
-
 - block:
   - name: Create CA certificate
     expect:
