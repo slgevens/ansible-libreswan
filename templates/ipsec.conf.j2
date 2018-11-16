@@ -23,7 +23,7 @@ config setup
       % endif
 
 % if libreswan_tunnel_configuration is defined
-      % for t in libreswan_tunnel_configuration
+% for t in libreswan_tunnel_configuration
 conn {{ t.conn_name }}
      {{ t.conn_configuration }}
 % endfor
