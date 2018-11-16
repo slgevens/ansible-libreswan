@@ -2,31 +2,31 @@
 # {{ ansible_managed }}
 
 config setup
-      dumpdir={{ libreswan_dumpdir }}
-      % if libreswan_protostack is defined 
-      protostack={{ libreswan_protostack }}
-      % else
-      protostack=netkey
-      % endif
-      % if libreswan_plutodebug is defined 
-      plutodebug={{ libreswan_plutodebug }}
-      % else
-      plutodebug=all
-      % endif
-      % if libreswan_plutostderrlog is defined
-      plutostderrlog={{ libreswan_plutostderrlog }}
-      % else
-      plutostderrlog=/var/log/pluto.log
-      % endif
-      % if libreswan_setupitems is defined
-      {{ libreswan_setupitems }}
-      % endif
+     dumpdir={{ libreswan_dumpdir }}
+     % if libreswan_protostack is defined 
+     protostack={{ libreswan_protostack }}
+     % else
+     protostack=netkey
+     % endif
+     % if libreswan_plutodebug is defined 
+     plutodebug={{ libreswan_plutodebug }}
+     % else
+     plutodebug=all
+     % endif
+     % if libreswan_plutostderrlog is defined
+     plutostderrlog={{ libreswan_plutostderrlog }}
+     % else
+     plutostderrlog=/var/log/pluto.log
+     % endif
+     % if libreswan_setupitems is defined
+     {{ libreswan_setupitems }}
+     % endif
 
 % if libreswan_tunnel_configuration is defined
-% for t in libreswan_tunnel_configuration
+%   for t in libreswan_tunnel_configuration
 conn {{ t.conn_name }}
-     {{ t.conn_configuration }}
-% endfor
+{{ t.conn_configuration |indent(5, True) }}
+%   endfor
 % endif
 
 include /etc/ipsec.d/*.conf
