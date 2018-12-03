@@ -15,3 +15,4 @@ libreswan_plutostderrlog: /var/log/pluto.log
 libreswan_protostack: netkey
 libreswan_rsa_key_file: rsa_key
 libreswan_dumpdir: /var/run/pluto/
+libreswan_manage_start: False

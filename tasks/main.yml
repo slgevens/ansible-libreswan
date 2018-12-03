@@ -38,5 +38,5 @@
     shell: make -s programs && make -s install chdir="/tmp/{{ libreswan_version }}"
   when: ipsec_inst.stat.exists == False
 
-- include_tasks: configure.yml
-- include_tasks: manage.yml
+- import_tasks: configure.yml
+- import_tasks: manage.yml
