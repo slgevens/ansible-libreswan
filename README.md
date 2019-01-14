@@ -26,7 +26,7 @@ ansible-playbook libreswan.yml -D
 ```
 
 To start all the tunnel set in your playbook : 
-```
+```console
 ansible-playbook libreswan.yml -D -e libreswan_manage_start=True
 ```
 
