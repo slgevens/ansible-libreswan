@@ -11,19 +11,18 @@
   with_items: "{{ initialized_db }}"
 
 - block:
-  - name: Set nss db secret
-    expect:
-      command: certutil -W -d sql:/etc/ipsec.d
-      responses: 
-        Enter new password: "{{ libreswan_nss_db_password }}"
-        Re-enter password: "{{ libreswan_nss_db_password }}"
-
   - name: Add nss DB secret to nsspasswd file
     lineinfile: 
       destfile: /etc/ipsec.d/nsspassword 
       line: "NSS Certificate DB:{{ libreswan_nss_db_password }}"
       create: yes 
       state: present
+  - name: Set nss db secret
+    expect:
+      command: certutil -W -d sql:/etc/ipsec.d
+      responses:
+        Enter new password: "{{ libreswan_nss_db_password }}"
+        Re-enter password: "{{ libreswan_nss_db_password }}"
   when: set_nssdb_secret|default(False)|bool and libreswan_nss_db_password is defined
 
 - name: Create host own RAW RSA key
@@ -78,10 +77,13 @@
 - name: Template secrets file
   template:
     src: libreswan.secrets.j2
-    dest: /etc/ipsec.d/libreswan.secrets
+    dest: '{{ item }}'
     owner: root
     group: root
     mode: 0600
+  with_items:
+    - /etc/ipsec.d/libreswan.secrets
+    - /etc/ipsec.secrets
 
 - name: Template pluto logrotate
   template:
