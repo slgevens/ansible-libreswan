@@ -1,16 +1,21 @@
 ---
 galaxy_info:
-    author: Evens SOLIGNAC
-    description: Ansible role to install and configure libreswan
-    license: MIT
-    min_ansible_version: 2.1
-    platforms:
+  author: Evens SOLIGNAC
+  description: Ansible role to install and configure libreswan
+  license: MIT
+  min_ansible_version: 2.1
+  platforms:
     - name: Debian
       versions:
         - jessie
-    categories:
-      - cloud
-      - system
-      - network
-    dependencies: []
-...
+    - name: Debian
+      versions:
+        - stretch
+    - name: Ubuntu
+      versions:
+        - xenial
+  categories:
+    - cloud
+    - system
+    - network
+  dependencies: []

@@ -2,29 +2,26 @@
 - name: Start ipsec service
   service: name=ipsec state=started
 
-- name: IPSec reads secrets
-  command: ipsec auto --rereadsecrets
-
 - block:
-  - name: Start/load tunnels configuration in ipsec
-    register: tun_add
-    command: ipsec auto --add "{{ item.conn_name }}"
-    with_items:
-      - "{{ libreswan_tunnel_configuration }}"
+    - name: Start/load tunnels configuration in ipsec
+      register: tun_add
+      command: ipsec auto --add "{{ item.conn_name }}"
+      with_items:
+        - "{{ libreswan_tunnel_configuration }}"
 
-  - debug: { var: tun_add }
-    tags: start
-    
-  - name: Turn up tunnels configuration
-    register: tun_up
-    command: ipsec auto --up "{{ item.conn_name }}"
-    with_items:
-      - "{{ libreswan_tunnel_configuration }}"
+    - debug: { var: tun_add }
+      tags: start
 
-  - debug: { var: tun_up.stdout_lines }
-    tags: start
+    - name: Turn up tunnels configuration
+      register: tun_up
+      command: ipsec auto --up "{{ item.conn_name }}"
+      with_items:
+        - "{{ libreswan_tunnel_configuration }}"
 
-  - name: Stop ipsec if `stop_ipsec` is defined
-    command: ipsec stop
-    when: stop_ipsec|default(False)|bool
-  when: libreswan_manage_start is defined
+    - debug: { var: tun_up.stdout_lines }
+      tags: start
+
+    - name: Stop ipsec if `stop_ipsec` is defined
+      command: ipsec stop
+      when: stop_ipsec|default(False)|bool
+  when: libreswan_manage_start|default(False)|bool

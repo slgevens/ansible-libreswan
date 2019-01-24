@@ -1,6 +1,7 @@
-libreswan_packages: [libnss3-dev, libnspr4-dev, pkg-config, libpam-dev, libcap-ng-dev,
-  libcap-ng-utils, libselinux-dev, libcurl3-nss-dev, flex, bison, gcc, make, libunbound-dev,
-  libnss3-tools, libevent-dev, xmlto, libsystemd-dev, lzip, python-pip]
+---
+libreswan_packages: [ libnss3-dev, libnspr4-dev, pkg-config, libpam-dev, libcap-ng-dev,
+                      libcap-ng-utils, libselinux-dev, libcurl3-nss-dev, flex, bison, gcc, make, libunbound-dev,
+                      libnss3-tools, libevent-dev, xmlto, libsystemd-dev, lzip, python-pip ]
 libreswan_ca_issuer: evens
 libreswan_ca_nickname: evens
 libreswan_ca_subject: epiconcept
@@ -15,4 +16,33 @@ libreswan_plutostderrlog: /var/log/pluto.log
 libreswan_protostack: netkey
 libreswan_rsa_key_file: rsa_key
 libreswan_dumpdir: /var/run/pluto/
-libreswan_manage_start: False
+libreswan_secrets:
+  - hosts: ''
+    comment_name: TEST_MOL
+    auth_type: PSK
+    key: PK3YHQ0ZDlnJJO0K
+
+libreswan_tunnel_configuration:
+  - conn_name: TEST_MOL
+    conn_configuration: |
+      authby=secret
+      pfs=no
+      keyingtries=%forever
+      ikelifetime=8h
+      salifetime=1h
+      ike=aes256-sha1;modp1024,aes256-sha1;modp1536
+      phase2alg=aes256-sha1
+      compress=no
+      encapsulation=yes
+      type=tunnel
+      ikev2=permit
+      left=127.0.0.1
+      leftsubnet=192.168.241.0/24
+      leftsourceip=192.168.241.1
+      aggressive=no
+      right=127.0.0.1
+      rightsubnet=192.168.111.0/24
+      auto=add
+      dpddelay=10
+      dpdtimeout=3600
+      dpdaction=clear
