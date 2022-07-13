@@ -2,9 +2,6 @@
 - name: Update apt cache & install needed packages
   apt: name="{{ libreswan_packages }}" state=present update_cache=yes cache_valid_time=86400
 
-- name: Install pip-{{ libreswan_pip_version }}
-  pip: name=pip version="{{ libreswan_pip_version }}"
-
 - name: Install pexecpt using pip
   pip: name=pexpect version="{{ libreswan_pexecpt_version }}"
 
